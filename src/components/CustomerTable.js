@@ -1,7 +1,10 @@
 import { AgGridReact } from "ag-grid-react/lib/agGridReact";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import "ag-grid-community/dist/styles/ag-grid.css";
 import "ag-grid-community/dist/styles/ag-theme-material.css";
+import AddCustomer from "./AddCustomer";
+import { Button } from "@material-ui/core";
+import EditCustomer from "./EditCustomer";
 
 function CustomerTable() {
   const [customers, setCustomers] = useState([]);
@@ -10,11 +13,43 @@ function CustomerTable() {
     getCustomers();
   }, []);
 
+  const gridRef = useRef();
+
   const getCustomers = () => {
     fetch("https://customerrest.herokuapp.com/api/customers")
       .then((response) => response.json())
       .then((data) => setCustomers(data.content))
       .then(console.log(customers))
+      .catch((err) => console.error(err));
+  };
+
+  const addCustomer = (newCustomer) => {
+    fetch("https://customerrest.herokuapp.com/api/customers", {
+      method: "POST",
+      headers: { "Content-type": "application/json" },
+      body: JSON.stringify(newCustomer),
+    })
+      .then((_) => gridRef.current.refreshCells({ rowNodes: getCustomers() }))
+      .catch((err) => console.error(err));
+  };
+
+  const deleteCustomer = (link) => {
+    if (window.confirm("Are you sure?")) {
+      fetch(link[0].href, {
+        method: "DELETE",
+      })
+        .then((_) => gridRef.current.refreshCells({ rowNodes: getCustomers() }))
+        .catch((err) => console.error(err));
+    }
+  };
+
+  const editCustomer = (link, customer) => {
+    fetch(link[0].href, {
+      method: "PUT",
+      headers: { "Content-type": "application/json" },
+      body: JSON.stringify(customer),
+    })
+      .then((_) => gridRef.current.refreshCells({ rowNodes: getCustomers() }))
       .catch((err) => console.error(err));
   };
 
@@ -43,23 +78,65 @@ function CustomerTable() {
       sortable: true,
       filter: true,
     },
-    { headerName: "City", field: "city", sortable: true, filter: true },
-    { headerName: "E-Mail", field: "email", sortable: true, filter: true },
+    {
+      headerName: "City",
+      field: "city",
+      sortable: true,
+      filter: true,
+    },
+    {
+      headerName: "E-Mail",
+      field: "email",
+      sortable: true,
+      filter: true,
+    },
     {
       headerName: "Phone Number",
       field: "phone",
       sortable: true,
       filter: true,
     },
+    {
+      headerName: "",
+      field: "links",
+      cellRendererFramework: (params) => (
+        <Button
+          color="secondary"
+          variant="outlined"
+          size="small"
+          onClick={() => deleteCustomer(params.value)}
+        >
+          Delete
+        </Button>
+      ),
+    },
+    {
+      headerName: "",
+      field: "links",
+      cellRendererFramework: (params) => (
+        <EditCustomer
+          editCustomer={editCustomer}
+          params={params}
+        ></EditCustomer>
+      ),
+    },
   ];
 
   return (
     <div>
+      <AddCustomer addCustomer={addCustomer}></AddCustomer>
       <div
         className="ag-theme-material"
         style={{ height: "700px", width: "90%", margin: "auto" }}
       >
-        <AgGridReact columnDefs={columns} rowData={customers}></AgGridReact>
+        <AgGridReact
+          columnDefs={columns}
+          rowData={customers}
+          ref={gridRef}
+          onGridReady={(params) => {
+            gridRef.current = params.api;
+          }}
+        ></AgGridReact>
       </div>
     </div>
   );
