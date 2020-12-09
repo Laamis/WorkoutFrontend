@@ -5,6 +5,7 @@ import "ag-grid-community/dist/styles/ag-theme-material.css";
 import AddCustomer from "./AddCustomer";
 import { Button } from "@material-ui/core";
 import EditCustomer from "./EditCustomer";
+import AddWorkout from "./AddWorkout";
 
 function CustomerTable() {
   const [customers, setCustomers] = useState([]);
@@ -19,7 +20,6 @@ function CustomerTable() {
     fetch("https://customerrest.herokuapp.com/api/customers")
       .then((response) => response.json())
       .then((data) => setCustomers(data.content))
-      .then(console.log(customers))
       .catch((err) => console.error(err));
   };
 
@@ -44,6 +44,8 @@ function CustomerTable() {
   };
 
   const editCustomer = (link, customer) => {
+
+    console.log(customer)
     fetch(link[0].href, {
       method: "PUT",
       headers: { "Content-type": "application/json" },
@@ -52,6 +54,17 @@ function CustomerTable() {
       .then((_) => gridRef.current.refreshCells({ rowNodes: getCustomers() }))
       .catch((err) => console.error(err));
   };
+
+  const addWorkout = (workout) => {
+    console.log(workout)
+      fetch("https://customerrest.herokuapp.com/api/trainings", {
+      method: "POST",
+      headers: { "Content-type" : "application/json"},
+      body: JSON.stringify(workout)
+    })
+    .then(_ => gridRef.current.refreshCells({rowNodes: getCustomers()}))
+    .catch((err) => console.error(err))  
+  }
 
   const columns = [
     {
@@ -120,6 +133,17 @@ function CustomerTable() {
         ></EditCustomer>
       ),
     },
+    {
+      headerName: "",
+      field: "links.href",
+      cellRendererFramework: (params) => (
+        <AddWorkout
+          addWorkout={addWorkout}
+          params={params}
+          
+        ></AddWorkout>
+      ),
+    }
   ];
 
   return (

@@ -13,9 +13,11 @@ function WorkoutTable() {
 
   const getTrainings = () => {
     fetch("https://customerrest.herokuapp.com/gettrainings")
-    
       .then((response) => response.json())
-      .then((data) => setWorkouts(data));
+      .then(data => {
+        setWorkouts(data)
+        console.log(data[0].id)
+      })
   };
   const columns = [
     {
