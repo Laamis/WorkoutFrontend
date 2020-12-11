@@ -159,6 +159,7 @@ function CustomerTable() {
           ref={gridRef}
           onGridReady={(params) => {
             gridRef.current = params.api;
+            params.api.sizeColumnsToFit()
           }}
         ></AgGridReact>
       </div>
